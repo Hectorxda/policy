@@ -144,8 +144,10 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     
     private boolean mIsVolumnDownClicked = false;
     private boolean mIsPowerClicked = false;
-    private boolean mIsNeedInterceptVolumnDown;
     private boolean mPendingPowerKeyUpCanceled;
+    //mark the volumndown and power click time from boot
+    private long mVolumnDownUptimeMillis;
+    private long mPowerUptimeMillis;
     
 
     // wallpaper is at the bottom, though the window manager may move it.
@@ -1321,24 +1323,12 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         if ((keyCode == KeyEvent.KEYCODE_BACK) && !down) {
             mHandler.removeCallbacks(mBackLongPress);
         }
-        
-//        if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN
-//                && mIsNeedInterceptVolumnDown) {
-//            if (!down) {
-//                mIsNeedInterceptVolumnDown = false;
-//            }
-//            Log.d(TAG, "XXXXXXXXXXXXXXXXXXX");
-//            return true;
-//        }
 
+        // If click the power first then volumn down will be intercept and not to pass by
         if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) {
-            
-            Log.d(TAG, "power status: "+mIsPowerClicked + " neet to intercept volumn: "+mIsNeedInterceptVolumnDown);
             if (mIsPowerClicked) {
-                Log.d(TAG, "xxxxxxxxxxxxxxxxxxx");
                 return true;
             }
-            
         }
 
         // If the HOME button is currently being held, then we do special
@@ -2166,14 +2156,12 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     if (down) {
                         if (isScreenOn && !mIsVolumnDownClicked) {
                             mIsVolumnDownClicked = true;
-                            mIsNeedInterceptVolumnDown = false;
                             cancelPendingPowerKeyAction();
-                            Log.d(TAG, "mIsVolumnDownClicked="+ mIsVolumnDownClicked);
+                            mVolumnDownUptimeMillis = SystemClock.uptimeMillis();
                             interceptScreenCapture();
                         }
                     }else {
                         mIsVolumnDownClicked = false;
-                        Log.d(TAG, "mIsVolumnDownClicked="+ mIsVolumnDownClicked);
                     }
                 }
                 // cm71 nightlies: will be replaced by CmPhoneWindowManager's new volume handling
@@ -2291,6 +2279,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 if (down) {
                     if (isScreenOn && !mIsPowerClicked) {
                         mIsPowerClicked = true;
+                        mPowerUptimeMillis = SystemClock.uptimeMillis();
                         interceptScreenCapture();
                     }
                     ITelephony telephonyService = getTelephonyService();
@@ -3014,13 +3003,16 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     }
     
     private void interceptScreenCapture(){
-        if (mIsVolumnDownClicked && mIsPowerClicked) {
-            mIsNeedInterceptVolumnDown = true;
+        
+        if (mIsVolumnDownClicked && mIsPowerClicked && mPowerUptimeMillis < mVolumnDownUptimeMillis) {
             cancelPendingPowerKeyAction();
             takeCapture();
-            Log.d(TAG, "take a screenshoot now!");
+            Log.d(TAG, "take a screenshot now!");
+        }else {
+            //avoid take screenshot take volumnpale dialog bug
+            //this is first solution but not the best solution
+            Log.d(TAG,"should not screenshot because volumn click first");
         }
-        
     }
     
     private void takeCapture(){
