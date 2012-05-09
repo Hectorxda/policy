@@ -1321,20 +1321,24 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             mHandler.removeCallbacks(mBackLongPress);
         }
         
-        if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN
-                && mIsNeedInterceptVolumnDown) {
-            //Log.d(TAG, "mIsNeedInterceptVolumnDown="+mIsNeedInterceptVolumnDown);
-            if (!down) {
-                mIsNeedInterceptVolumnDown = false;
-            }
-            Log.d(TAG, "XXXXXXXXXXXXXXXXXXX");
-            return true;
-        }
-
-//        if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) {
+//        if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN
+//                && mIsNeedInterceptVolumnDown) {
+//            if (!down) {
+//                mIsNeedInterceptVolumnDown = false;
+//            }
 //            Log.d(TAG, "XXXXXXXXXXXXXXXXXXX");
 //            return true;
 //        }
+
+        if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) {
+            
+            Log.d(TAG, "power status: "+mIsPowerClicked + " neet to intercept volumn: "+mIsNeedInterceptVolumnDown);
+            if (mIsPowerClicked) {
+                Log.d(TAG, "xxxxxxxxxxxxxxxxxxx");
+                return true;
+            }
+            
+        }
 
         // If the HOME button is currently being held, then we do special
         // chording with it.
