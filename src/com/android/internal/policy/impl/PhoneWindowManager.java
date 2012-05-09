@@ -145,6 +145,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     private boolean mIsVolumnDownClicked = false;
     private boolean mIsPowerClicked = false;
     private boolean mIsNeedInterceptVolumnDown;
+    private boolean mPendingPowerKeyUpCanceled;
     
 
     // wallpaper is at the bottom, though the window manager may move it.
@@ -2166,6 +2167,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                         if (isScreenOn && !mIsVolumnDownClicked) {
                             mIsVolumnDownClicked = true;
                             mIsNeedInterceptVolumnDown = false;
+                            cancelPendingPowerKeyAction();
                             Log.d(TAG, "mIsVolumnDownClicked="+ mIsVolumnDownClicked);
                             interceptScreenCapture();
                         }
@@ -2313,9 +2315,12 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     interceptPowerKeyDown(!isScreenOn || hungUp || mIsVolumnDownClicked);
                 } else {
                     mIsPowerClicked = false;
-                    if (interceptPowerKeyUp(canceled)) {
+                    Log.d(TAG, "111111mPendingPowerKeyUpCanceled="+mPendingPowerKeyUpCanceled);
+                    if (interceptPowerKeyUp(canceled || mPendingPowerKeyUpCanceled)) {
+                        Log.d(TAG, "222222mPendingPowerKeyUpCanceled="+mPendingPowerKeyUpCanceled);
                         result = (result & ~ACTION_POKE_USER_ACTIVITY) | ACTION_GO_TO_SLEEP;
                     }
+                    mPendingPowerKeyUpCanceled = false;
                 }
                 break;
             }
@@ -3013,6 +3018,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     private void interceptScreenCapture(){
         if (mIsVolumnDownClicked && mIsPowerClicked) {
             mIsNeedInterceptVolumnDown = true;
+            cancelPendingPowerKeyAction();
             takeCapture();
             Log.d(TAG, "take a screenshoot now!");
         }
@@ -3026,4 +3032,12 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         }
     }
     
+    private void cancelPendingPowerKeyAction() {
+        if (!mPowerKeyHandled) {
+            mHandler.removeCallbacks(mPowerLongPress);
+        }
+        if (mIsPowerClicked) {
+            mPendingPowerKeyUpCanceled = true;
+        }
+    }
 }
