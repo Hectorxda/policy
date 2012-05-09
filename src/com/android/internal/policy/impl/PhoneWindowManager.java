@@ -144,6 +144,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     
     private boolean mIsVolumnDownClicked = false;
     private boolean mIsPowerClicked = false;
+    private boolean mIsNeedInterceptVolumnDown;
     
 
     // wallpaper is at the bottom, though the window manager may move it.
@@ -1319,6 +1320,21 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         if ((keyCode == KeyEvent.KEYCODE_BACK) && !down) {
             mHandler.removeCallbacks(mBackLongPress);
         }
+        
+        if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN
+                && mIsNeedInterceptVolumnDown) {
+            //Log.d(TAG, "mIsNeedInterceptVolumnDown="+mIsNeedInterceptVolumnDown);
+            if (!down) {
+                mIsNeedInterceptVolumnDown = false;
+            }
+            Log.d(TAG, "XXXXXXXXXXXXXXXXXXX");
+            return true;
+        }
+
+//        if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) {
+//            Log.d(TAG, "XXXXXXXXXXXXXXXXXXX");
+//            return true;
+//        }
 
         // If the HOME button is currently being held, then we do special
         // chording with it.
@@ -2015,7 +2031,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             // during the call, but we do it as a precaution for the rare possibility
             // that the music stops right before we call this
             mBroadcastWakeLock.acquire();
-
             audioService.adjustStreamVolume(stream,
                 keycode == KeyEvent.KEYCODE_VOLUME_UP
                             ? AudioManager.ADJUST_RAISE
@@ -2146,22 +2161,23 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     if (down) {
                         if (isScreenOn && !mIsVolumnDownClicked) {
                             mIsVolumnDownClicked = true;
-                            Log.d(TAG, "###mIsVolumnDownClicked###="+ mIsVolumnDownClicked);
+                            mIsNeedInterceptVolumnDown = false;
+                            Log.d(TAG, "mIsVolumnDownClicked="+ mIsVolumnDownClicked);
                             interceptScreenCapture();
                         }
                     }else {
                         mIsVolumnDownClicked = false;
-                        Log.d(TAG, "###mIsVolumnDownClicked###="+ mIsVolumnDownClicked);
+                        Log.d(TAG, "mIsVolumnDownClicked="+ mIsVolumnDownClicked);
                     }
                 }
                 // cm71 nightlies: will be replaced by CmPhoneWindowManager's new volume handling
                 if(mVolBtnMusicControls && !down)
                 {
                     handleVolumeLongPressAbort();
-
                     // delay handling volume events if mVolBtnMusicControls is desired
-                    if (isMusicActive() && !mIsLongPress && (result & ACTION_PASS_TO_USER) == 0)
+                    if (isMusicActive() && !mIsLongPress && (result & ACTION_PASS_TO_USER) == 0){
                         handleVolumeKey(AudioManager.STREAM_MUSIC, keyCode);
+                    }
                 }
                 if (down) {
                     ITelephony telephonyService = getTelephonyService();
@@ -2992,8 +3008,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     
     private void interceptScreenCapture(){
         if (mIsVolumnDownClicked && mIsPowerClicked) {
+            mIsNeedInterceptVolumnDown = true;
             takeCapture();
-            Log.d(TAG, "-----screenshot-----");
+            Log.d(TAG, "take a screenshoot now!");
         }
         
     }
