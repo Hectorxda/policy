@@ -2315,9 +2315,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     interceptPowerKeyDown(!isScreenOn || hungUp || mIsVolumnDownClicked);
                 } else {
                     mIsPowerClicked = false;
-                    Log.d(TAG, "111111mPendingPowerKeyUpCanceled="+mPendingPowerKeyUpCanceled);
                     if (interceptPowerKeyUp(canceled || mPendingPowerKeyUpCanceled)) {
-                        Log.d(TAG, "222222mPendingPowerKeyUpCanceled="+mPendingPowerKeyUpCanceled);
                         result = (result & ~ACTION_POKE_USER_ACTIVITY) | ACTION_GO_TO_SLEEP;
                     }
                     mPendingPowerKeyUpCanceled = false;
